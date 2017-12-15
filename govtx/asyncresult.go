@@ -6,7 +6,7 @@ type AsyncResult struct {
 }
 
 func (as *AsyncResult) Succeeded() bool {
-	return as.Result != nil
+	return as.Cause == nil
 }
 
 func (as *AsyncResult) Failed() bool {

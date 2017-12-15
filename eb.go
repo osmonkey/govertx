@@ -25,7 +25,7 @@ func con(m *govtx.Message) {
 	log.Println("Start Res")
 	time.Sleep(3 * time.Second)
 	log.Println(string(m.SendBody))
-	m.Reply([]byte("xxx"))
+	m.Reply([]byte(""))
 
 }
 
