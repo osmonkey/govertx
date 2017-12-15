@@ -12,7 +12,7 @@ type eventBus struct {
 }
 
 type handler struct {
-	F  func(message Message)
+	F  func(message *Message)
 	Id uuid.UUID
 }
 
@@ -22,7 +22,7 @@ func NewEventBus() *eventBus {
 	return &eb
 }
 
-func (eb *eventBus) Consumer(key string, f func(message Message)) uuid.UUID {
+func (eb *eventBus) Consumer(key string, f func(message *Message)) uuid.UUID {
 	id := uuid.NewV4()
 	eb.mapMutex.Lock()
 	defer eb.mapMutex.Unlock()
@@ -42,6 +42,14 @@ func (eb *eventBus) Send(adr string, msg []byte, f func(result AsyncResult)) {
 	if !ok {
 		f(AsyncResult{nil, errors.New("Adress not found")})
 	} else {
-		//f(eb.handlerMap[adr][0].F(Message{[]byte{}, msg}))
+		c := make(chan AsyncResult)
+		defer close(c)
+		go func() {
+			m := Message{}
+			m.SendBody = msg
+			eb.handlerMap[adr][0].F(&m)
+			c <- m.Result()
+		}()
+		f(<-c)
 	}
 }
