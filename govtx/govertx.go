@@ -2,8 +2,6 @@ package govtx
 
 import (
 	"github.com/satori/go.uuid"
-	"log"
-	"reflect"
 	"sort"
 )
 
@@ -58,33 +56,25 @@ func (gv *goVertx) Deploy(f func(d DeployResult)) {
 
 func (gv *goVertx) deploy(key int) int {
 	services := gv.serviceMap[key]
-	chanels := make([]chan error, len(services))
+	idx := []int{}
+	for i := range services {
+		if services[i].Deployed == false {
+			idx = append(idx, i)
+		}
+	}
+	chanels := make([]chan error, len(idx))
 	for i := range chanels {
 		chanels[i] = make(chan error)
 	}
-	cases := make([]reflect.SelectCase, len(chanels))
-	for i, ch := range chanels {
-		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
-	}
-	for i := range services {
+	for _, i := range idx {
 		go func() {
 			services[i].Service.Start()
 			services[i].Deployed = true
 			chanels[i] <- nil
-			close(chanels[i])
 		}()
 	}
-	remaining := len(cases)
-	for remaining > 0 {
-		chosen, _, ok := reflect.Select(cases)
-		if !ok {
-			// The chosen channel has been closed, so zero out the channel to disable the case
-			cases[chosen].Chan = reflect.ValueOf(nil)
-			remaining -= 1
-			continue
-		}
-
-		log.Printf("Read from channel %#v and received", chanels[chosen])
+	for i := range chanels {
+		<-chanels[i]
 	}
 
 	return len(services)
