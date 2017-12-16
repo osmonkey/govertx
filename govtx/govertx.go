@@ -98,26 +98,34 @@ func (gv *goVertx) deploy(key int) (int, error) {
 	return len(services), nil
 }
 
-//todo make async
 func (gv *goVertx) Close() {
-	for _, v := range gv.serviceMap {
-		for i := range v {
-			v[i].Service.Stop()
-		}
-	}
 	chanels := make([]chan error, len(gv.serviceMap))
 	for i := range chanels {
 		chanels[i] = make(chan error)
 	}
-	for i := range gv.serviceMap {
-		_ = i
+	for i, v := range gv.serviceMap {
+		go func() {
+			gv.close(&v)
+			chanels[i] <- nil
+		}()
+	}
+	for i := range chanels {
+		<-chanels[i]
 	}
 }
 
 func (gv *goVertx) close(si *[]ServiceInfo) {
-	for _, v := range *si {
-		err := v.Service.Stop()
-		_ = err
+	chanels := make([]chan error, len(*si))
+	for i := range chanels {
+		chanels[i] = make(chan error)
+	}
+	for i, v := range *si {
+		go func() {
+			chanels[i] <- v.Service.Stop()
+		}()
+	}
+	for i := range chanels {
+		<-chanels[i]
 	}
 }
 
