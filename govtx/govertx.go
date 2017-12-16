@@ -1,13 +1,14 @@
 package govtx
 
 import (
+	"encoding/binary"
 	"github.com/satori/go.uuid"
 	"sort"
 )
 
 type Service interface {
-	Start()
-	Stop()
+	Start() error
+	Stop() error
 }
 
 type ServiceType struct {
@@ -46,15 +47,25 @@ func (gv *goVertx) Add(priority int, service Service) uuid.UUID {
 	return uuid
 }
 
-func (gv *goVertx) Deploy(f func(d DeployResult)) {
+func (gv *goVertx) Deploy(f func(d AsyncResult)) {
 	skeys := gv.sortedKeyList()
+	i := 0
 	for key := range skeys {
-		gv.deploy(skeys[key])
+		k, err := gv.deploy(skeys[key])
+		if err != nil {
+			bs := make([]byte, 4)
+			binary.LittleEndian.PutUint32(bs, uint32(i))
+			f(AsyncResult{bs, err})
+			return
+		}
+		i = i + k
 	}
-
+	bs := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bs, uint32(i))
+	f(AsyncResult{bs, nil})
 }
 
-func (gv *goVertx) deploy(key int) int {
+func (gv *goVertx) deploy(key int) (int, error) {
 	services := gv.serviceMap[key]
 	idx := []int{}
 	for i := range services {
@@ -68,16 +79,23 @@ func (gv *goVertx) deploy(key int) int {
 	}
 	for _, i := range idx {
 		go func() {
-			services[i].Service.Start()
-			services[i].Deployed = true
-			chanels[i] <- nil
+			err := services[i].Service.Start()
+			if err != nil {
+				chanels[i] <- err
+			} else {
+				services[i].Deployed = true
+				chanels[i] <- nil
+			}
 		}()
 	}
 	for i := range chanels {
-		<-chanels[i]
+		err := <-chanels[i]
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	return len(services)
+	return len(services), nil
 }
 
 //todo make async
@@ -86,6 +104,20 @@ func (gv *goVertx) Close() {
 		for i := range v {
 			v[i].Service.Stop()
 		}
+	}
+	chanels := make([]chan error, len(gv.serviceMap))
+	for i := range chanels {
+		chanels[i] = make(chan error)
+	}
+	for i := range gv.serviceMap {
+		_ = i
+	}
+}
+
+func (gv *goVertx) close(si *[]ServiceInfo) {
+	for _, v := range *si {
+		err := v.Service.Stop()
+		_ = err
 	}
 }
 
