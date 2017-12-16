@@ -132,7 +132,7 @@ func (gv *goVertx) close(si *[]ServiceInfo) {
 func (gv *goVertx) sortedKeyList() []int {
 	keyList := make([]int, 0)
 	for k, _ := range gv.serviceMap {
-		keyList = append(keyList, int(k))
+		keyList = append(keyList, k)
 	}
 	sort.Ints(keyList)
 	return keyList
