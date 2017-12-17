@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func result(dr govtx.DeployResult) {
+func result(dr govtx.AsyncResult) {
 	log.Println("Done")
 }
 
@@ -35,58 +35,68 @@ type Service1 struct {
 	govtx.ServiceType
 }
 
-func (ns *Service1) Start() {
+func (ns *Service1) Start() error {
 	log.Println("Start Service1")
+	return nil
 }
 
-func (ns *Service1) Stop() {
+func (ns *Service1) Stop() error {
 	log.Println("Stop Service1")
+	return nil
 }
 
 type Service2 struct {
 	govtx.ServiceType
 }
 
-func (ns *Service2) Start() {
+func (ns *Service2) Start() error {
 	log.Println("Start Service2")
+	return nil
 }
 
-func (ns *Service2) Stop() {
+func (ns *Service2) Stop() error {
 	log.Println("Stop Service2")
+	return nil
 }
 
 type Service3 struct {
 	govtx.ServiceType
 }
 
-func (ns *Service3) Start() {
+func (ns *Service3) Start() error {
 	log.Println("Start Service3")
+	return nil
 }
 
-func (ns *Service3) Stop() {
+func (ns *Service3) Stop() error {
 	log.Println("Stop Service3")
+	return nil
 }
 
 type Service4 struct {
 	govtx.ServiceType
 }
 
-func (ns *Service4) Start() {
+func (ns *Service4) Start() error {
 	log.Println("Start Service4")
+	return nil
 }
 
-func (ns *Service4) Stop() {
+func (ns *Service4) Stop() error {
 	log.Println("Stop Service4")
+	return nil
 }
 
 type Service5 struct {
 	govtx.ServiceType
 }
 
-func (ns *Service5) Start() {
+func (ns *Service5) Start() error {
 	log.Println("Start Service5")
+	return nil
 }
 
-func (ns *Service5) Stop() {
+func (ns *Service5) Stop() error {
 	log.Println("Stop Service5")
+	return nil
 }

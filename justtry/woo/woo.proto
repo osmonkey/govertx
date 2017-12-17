@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message WooRequest {
+    string payload = 1;
+}
+
+message WooResponse {
+    string message = 1;
+}
+
+service WooService {
+    rpc Call (WooRequest) returns (WooResponse);
+}
