@@ -73,59 +73,50 @@ func (gv *goVertx) deploy(key int) (int, error) {
 			idx = append(idx, i)
 		}
 	}
-	chanels := make([]chan error, len(idx))
-	for i := range chanels {
-		chanels[i] = make(chan error)
-	}
-	for _, i := range idx {
-		go func() {
-			err := services[i].Service.Start()
+	chanel := make(chan error, len(idx))
+	defer close(chanel)
+	for _, x := range idx {
+		go func(k int) {
+			err := services[k].Service.Start()
 			if err != nil {
-				chanels[i] <- err
+				chanel <- err
 			} else {
-				services[i].Deployed = true
-				chanels[i] <- nil
+				services[k].Deployed = true
+				chanel <- nil
 			}
-		}()
+		}(x)
 	}
-	for i := range chanels {
-		err := <-chanels[i]
+	for _ = range idx {
+		err := <-chanel
 		if err != nil {
 			return 0, err
 		}
 	}
-
 	return len(services), nil
 }
 
 func (gv *goVertx) Close() {
-	chanels := make([]chan error, len(gv.serviceMap))
-	for i := range chanels {
-		chanels[i] = make(chan error)
-	}
-	for i, v := range gv.serviceMap {
-		go func() {
+	chanel := make(chan error, len(gv.serviceMap))
+	for _, v := range gv.serviceMap {
+		go func(v []ServiceInfo) {
 			gv.close(&v)
-			chanels[i] <- nil
-		}()
+			chanel <- nil
+		}(v)
 	}
-	for i := range chanels {
-		<-chanels[i]
+	for _ = range chanel {
+		<-chanel
 	}
 }
 
 func (gv *goVertx) close(si *[]ServiceInfo) {
-	chanels := make([]chan error, len(*si))
-	for i := range chanels {
-		chanels[i] = make(chan error)
+	chanel := make(chan error, len(*si))
+	for _, v := range *si {
+		go func(v ServiceInfo) {
+			chanel <- v.Service.Stop()
+		}(v)
 	}
-	for i, v := range *si {
-		go func() {
-			chanels[i] <- v.Service.Stop()
-		}()
-	}
-	for i := range chanels {
-		<-chanels[i]
+	for _ = range chanel {
+		<-chanel
 	}
 }
 

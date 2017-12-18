@@ -3,29 +3,27 @@ package main
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 )
 
 func main() {
-	fmt.Println("GO")
-	sl := []chan bool{}
-	for i := 0; i < 5; i++ {
-		sl = append(sl, make(chan bool))
-	}
-	go l("Rob", 8*time.Second, sl[0])
-	go l("Olaf", 7*time.Second, sl[1])
-	go l("Claus", 2*time.Second, sl[2])
-	go l("Marc", 4*time.Second, sl[3])
-	go l("Hel", 3*time.Second, sl[4])
+	fmt.Printf("GO %d\n", runtime.NumCPU())
+	sl := make(chan bool, 5)
+	go l2("Rob", 8*time.Second, &sl)
+	go l2("Olaf", 7*time.Second, &sl)
+	go l2("Claus", 2*time.Second, &sl)
+	go l2("Marc", 4*time.Second, &sl)
+	go l2("Hel", 3*time.Second, &sl)
 
-	for _, v := range sl {
-		<-v
+	for i := 0; i < 5; i++ {
+		<-sl
 	}
 	log.Println("Done")
 }
 
-func l(s string, d time.Duration, c chan bool) {
+func l2(s string, d time.Duration, c *chan bool) {
 	time.Sleep(d)
 	log.Printf("%s with %s", s, d.String())
-	c <- true
+	*c <- true
 }

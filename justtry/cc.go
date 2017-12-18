@@ -2,33 +2,24 @@ package main
 
 import (
 	w "./woo"
-	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"log"
-	"net"
 )
 
-type wServer struct {
-}
-
-func (w *wServer) Call(context.Context, *w.WooRequest) (*w.WooResponse, error) {
-	return nil, nil
-}
-
 func main() {
-
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 49300))
+	creds, err := credentials.NewClientTLSFromFile("/home/olaf/Development/govertx/justtry/clicert.pem", "local")
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+	conn, err := grpc.Dial("localhost:49300", opts...)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
 
-	creds, err := credentials.NewServerTLSFromFile("/home/olaf/Development/govertx/justtry/certificate.pem", "/home/olaf/Development/govertx/justtry/key.pem")
-	opts := []grpc.ServerOption{grpc.Creds(creds)}
-	grpcServer := grpc.NewServer(opts...)
-	ws := wServer{}
-	w.RegisterWooServiceServer(grpcServer, &ws)
-	log.Println("Server started")
-	grpcServer.Serve(lis)
+	}
+	defer conn.Close()
+	client := w.NewWooServiceClient(conn)
+	r, err := client.Call(context.Background(), &w.WooRequest{})
+	if err != nil {
+		log.Println(err.Error())
+	}
+	log.Println(r.Message)
 }
