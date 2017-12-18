@@ -2,6 +2,7 @@ package govtx
 
 import (
 	"encoding/binary"
+	"errors"
 	"github.com/satori/go.uuid"
 	"sort"
 )
@@ -93,6 +94,10 @@ func (gv *goVertx) deploy(key int) (int, error) {
 		}
 	}
 	return len(services), nil
+}
+
+func (gv *goVertx) Undeploy(uuid uuid.UUID) error {
+	return errors.New("Unimplemented")
 }
 
 func (gv *goVertx) Close() {
