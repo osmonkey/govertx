@@ -2,11 +2,13 @@ package main
 
 import (
 	"./govtx"
+	"errors"
 	"log"
+	"os"
 )
 
 func result(dr govtx.AsyncResult) {
-	log.Println("Done")
+	log.Println("Deploy done")
 }
 
 func main() {
@@ -28,7 +30,7 @@ func main() {
 	govtx.Deploy(result)
 
 	govtx.Close()
-
+	os.Exit(0)
 }
 
 type Service1 struct {
@@ -65,7 +67,7 @@ type Service3 struct {
 
 func (ns *Service3) Start() error {
 	log.Println("Start Service3")
-	return nil
+	return errors.New("3")
 }
 
 func (ns *Service3) Stop() error {

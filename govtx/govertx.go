@@ -100,29 +100,38 @@ func (gv *goVertx) Undeploy(uuid uuid.UUID) error {
 	return errors.New("Unimplemented")
 }
 
-func (gv *goVertx) Close() {
+func (gv *goVertx) Close() error {
 	chanel := make(chan error, len(gv.serviceMap))
+	defer close(chanel)
 	for _, v := range gv.serviceMap {
 		go func(v []ServiceInfo) {
-			gv.close(&v)
-			chanel <- nil
+			chanel <- gv.close(&v)
 		}(v)
 	}
-	for _ = range chanel {
-		<-chanel
+	for i := 0; i < len(gv.serviceMap); i++ {
+		err := <-chanel
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (gv *goVertx) close(si *[]ServiceInfo) {
+func (gv *goVertx) close(si *[]ServiceInfo) error {
 	chanel := make(chan error, len(*si))
+	defer close(chanel)
 	for _, v := range *si {
 		go func(v ServiceInfo) {
 			chanel <- v.Service.Stop()
 		}(v)
 	}
 	for _ = range chanel {
-		<-chanel
+		err := <-chanel
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (gv *goVertx) sortedKeyList() []int {
