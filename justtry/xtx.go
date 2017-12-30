@@ -5,7 +5,12 @@ import (
 	"fmt"
 )
 
+type base struct {
+	Id string
+}
+
 type person struct {
+	base
 	Name string
 }
 
@@ -33,8 +38,13 @@ func main() {
 	fmt.Println(res.R[0].(*person).Name)
 
 	res.R[0].(*person).Name = "Lisa"
+	res.R[0].(*person).Id = "123"
 
-	fmt.Println(res.R[0].(*person).Name)
+	fmt.Println(res.R[0].(*person))
+
+	idstr := do(res.R[0])
+
+	fmt.Println("123" == *idstr)
 
 	prs := res.R[0].(*person)
 	prs.Name = "Lorbeer"
@@ -46,6 +56,22 @@ func main() {
 	for i := range res.R {
 		fmt.Println(res.R[i].(*person).Name)
 	}
+
+	asByte, err := json.Marshal(res.R)
+	s := string(asByte)
+	fmt.Println(s)
+}
+
+func do(i interface{}) *string {
+	switch i.(type) {
+	case *person:
+		return &i.(*person).Id
+	case *base:
+		return &i.(*base).Id
+	default:
+		panic("type not found")
+	}
+	//return new(string)
 }
 
 func Np() {
